@@ -1,0 +1,22 @@
+{
+  "index": {
+    "name": "首页模板",
+    "configs": [{
+      "name": "website_name",
+      "title": "网站名称",
+      "type": "text"
+    }, {
+      "name": "logo",
+      "title": "网站logo",
+      "type": "img"
+    }],
+    "banners": [{
+      "name": "top",
+      "title": "顶部banner"
+    }],
+    "articles": [{
+      "name": "fanslink",
+      "title": "友情链接"
+    }]
+  }
+}
