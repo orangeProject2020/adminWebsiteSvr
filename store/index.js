@@ -2,7 +2,8 @@ import axios from './../server/axios';
 
 export const state = () => ({
   token: '',
-  templateInfo: {}
+  templateInfo: {},
+  formDataBanner: {}
 })
 
 export const mutations = {
