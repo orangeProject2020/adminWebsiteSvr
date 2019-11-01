@@ -1,271 +1,347 @@
 <template>
-  <div class>
-    <el-card class="mt-4">
-      <div slot="header" class="clearfix">
-        <span class="text-2xl">广告横幅(Banner)</span>
-      </div>
-      <el-row :gutter="20">
-        <el-col :span="4">
-          <div class>
-            <div class="text-2xl">图片名称</div>
-            <div class="mt-2">
-              <img src alt style="height:100px;width:100%;" />
-            </div>
-            <div class="text-right mt-2">
-              <el-button type="primary" size="mini" @click="bannerModify">编辑</el-button>
-              <el-button type="danger" size="mini">删除</el-button>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="4">
-          <div class="text-2xl">添加图片</div>
-          <div
-            class="text-center text-2xl border border-dotted mt-2"
-            style="height:100px;line-height:100px;cursor: pointer;"
-            @click="bannerModify"
-          >
-            <p class="text-5xl">+</p>
-          </div>
-        </el-col>
-      </el-row>
-    </el-card>
-
-    <el-card class="mt-4">
-      <div slot="header" class="clearfix">
-        <span class="text-2xl">配置内容(Config)</span>
-      </div>
-      <el-row :gutter="20">
-        <template v-for="item in $store.state.templateInfo.configs">
-          <el-col :span="4">
-            <div class="text-2xl border-b">{{item.title}}</div>
-            <div class="mt-2" style="height:80px"></div>
-            <div class="text-right mt-2">
-              <el-button type="primary" size="mini" @click="configModify(item)">设置 / 查看</el-button>
-            </div>
-          </el-col>
+  <div>
+    <div class="text-4xl p-4 border-b">
+      网站栏目
+      <el-button type="primary" class="float-right" @click="categoryAddBtnClick">添加栏目</el-button>
+    </div>
+    <el-table :data="$store.state.categorys" stripe style="width: 100%">
+      <el-table-column label="栏目标题" width="180">
+        <template slot-scope="scope">{{scope.row.html}}{{scope.row.title}}</template>
+      </el-table-column>
+      <el-table-column prop="name" label="标识"></el-table-column>
+      <el-table-column prop="sort" label="排序" width="50"></el-table-column>
+      <el-table-column fixed="right" label="状态" width="200">
+        <template slot-scope="scope">
+          <template v-if="scope.row.status == 1">
+            <span class="text-green-400 cursor-pointer" @click="categoryStatusUpdate(scope.row)">正常</span>
+          </template>
+          <template v-if="scope.row.status == 0">
+            <span class="text-red-400 cursor-pointer" @click="categoryStatusUpdate(scope.row)">禁用</span>
+          </template>
         </template>
-      </el-row>
-    </el-card>
+      </el-table-column>
+      <el-table-column fixed="right" label="操作" width="200">
+        <template slot-scope="scope">
+          <el-button type="primary" size="small" @click="categoryUpdateBtnClick(scope.row)">编辑</el-button>
+          <el-button type="danger" size="small" @click="categoryStatusUpdate(scope.row, -1)">删除</el-button>
+        </template>
+      </el-table-column>
+      <el-table-column fixed="right" label width="100">
+        <template slot-scope="scope">
+          <!-- <el-button type="link" size="small">栏目数据</el-button> -->
+          <router-link :to="{path: '/data', query: {id: scope.row.id}}">栏目数据</router-link>
+        </template>
+      </el-table-column>
+    </el-table>
 
-    <el-card class="mt-4">
-      <div slot="header" class="clearfix">
-        <span class="text-2xl">文档数据(Article)</span>
-        <el-button style="float: right; padding: 3px 0" type="text" @click="articleModify">添加</el-button>
-      </div>
-      <el-table :data="tableData" style="width: 100%">
-        <el-table-column prop="date" label="日期" width="180"></el-table-column>
-        <el-table-column prop="name" label="姓名" width="180"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
-        <el-table-column fixed="right" label="操作" width="100">
-          <template slot-scope="scope">
-            <el-button @click="articleModify(scope.row)" type="text" size="small">查看</el-button>
-            <el-button type="text" size="small">编辑</el-button>
-          </template>
-        </el-table-column>
-      </el-table>
-      <el-pagination
-        :current-page="1"
-        :page-size="100"
-        layout="prev, pager, next, total, jumper"
-        :total="400"
-        class="mt-4"
-      ></el-pagination>
-    </el-card>
-
-    <el-dialog title="图片添加/编辑" :visible.sync="dialogVisibleBanner" width="60%">
-      <el-form :model="$store.state.formDataBanner" label-width="100px">
-        <el-form-item label="图片">
-          <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            multiple
-            :limit="1"
-            :on-exceed="handleExceed"
-            :file-list="fileList"
-          >
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
+    <el-dialog title="提示" :visible.sync="dialogVisible" width="70%">
+      <el-form label-width="120px" :model="categoryData" :rules="formRules" ref="formCategory">
+        <el-form-item label="上级栏目">
+          <el-select v-model="categoryData.pid" placeholder="请选择">
+            <el-option
+              v-for="item in categorys"
+              :key="item.id"
+              :label="item.title"
+              :value="item.id"
+              :disabled="item.disabled"
+            ></el-option>
+          </el-select>
         </el-form-item>
-
-        <el-form-item label="缩略图">
-          <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            multiple
-            :limit="1"
-            :on-exceed="handleExceed"
-            :file-list="fileList"
-          >
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
+        <el-form-item label="栏目标题" prop="title">
+          <el-input placeholder="请输入栏目标题" v-model="categoryData.title"></el-input>
         </el-form-item>
-
-        <el-form-item label="分类">
-          <el-radio v-model="radio" label="1">备选项</el-radio>
-          <el-radio v-model="radio" label="2">备选项</el-radio>
+        <el-form-item label="栏目标题" prop="name">
+          <el-input placeholder="请输入栏目标识" v-model="categoryData.name"></el-input>
         </el-form-item>
-
-        <el-form-item label="图片说明">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
+        <el-form-item label="栏目简述/副标题">
+          <el-input
+            type="textarea"
+            :rows="2"
+            placeholder="栏目简述 or 副标题"
+            v-model="categoryData.description"
+          ></el-input>
         </el-form-item>
-
-        <el-form-item label="点击跳转url">
-          <el-input v-model="input" placeholder="请输入内容"></el-input>
+        <el-form-item label="栏目排序">
+          <el-input-number v-model="categoryData.sort" :min="0" :max="10000" placeholder="越小越优先"></el-input-number>
         </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisibleBanner = false">取 消</el-button>
-        <!-- <el-button type="primary" @click="dialogVisible = false">确 定</el-button> -->
-      </span>
-    </el-dialog>
-
-    <el-dialog title="配置信息设置" :visible.sync="dialogVisibleConfig" width="60%">
-      <el-form ref="formConfig" label-width="100px">
-        <el-form-item label="配置项目">
-          <el-input :placeholder="formItemConfig.title" :disabled="true"></el-input>
+        <el-divider></el-divider>
+        <el-form-item label="栏目SEO标题">
+          <el-input placeholder="请输入栏目SEO标题,默认使用标题" v-model="categoryData.seo_title"></el-input>
         </el-form-item>
-
-        <el-form-item label="配置类型">
-          <el-input :placeholder="formItemConfig.type" :disabled="true"></el-input>
+        <el-form-item label="栏目SEO关键字">
+          <el-input
+            type="textarea"
+            :rows="2"
+            placeholder="请输入栏目SEO关键字"
+            v-model="categoryData.seo_keyword"
+          ></el-input>
         </el-form-item>
-
-        <el-form-item label="配置数据">
-          <template v-if="formItemConfig.type == 'text'">
-            <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
-          </template>
-          <template v-if="formItemConfig.type == 'img'">
-            <el-upload
-              class="upload-demo"
-              action="https://jsonplaceholder.typicode.com/posts/"
-              :on-preview="handlePreview"
-              :on-remove="handleRemove"
-              :before-remove="beforeRemove"
-              multiple
-              :limit="1"
-              :on-exceed="handleExceed"
-              :file-list="fileList"
-            >
-              <el-button size="small" type="primary">点击上传</el-button>
-              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-            </el-upload>
-          </template>
+        <el-form-item label="栏目SEO描述">
+          <el-input
+            type="textarea"
+            :rows="2"
+            placeholder="请输入栏目SEO描述，默认使用栏目简述"
+            v-model="categoryData.seo_description"
+          ></el-input>
+        </el-form-item>
+        <el-divider></el-divider>
+        <el-form-item label="栏目页模板">
+          <el-select v-model="categoryData.template" placeholder="请选择">
+            <el-option
+              v-for="item in templatesCategory"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
+          </el-select>
+        </el-form-item>
+        <el-form-item label="详情页模板">
+          <el-select v-model="categoryData.template_article" placeholder="请选择">
+            <el-option
+              v-for="item in templatesArticle"
+              :key="item.id"
+              :label="item.name"
+              :value="item.id"
+            ></el-option>
+          </el-select>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisibleConfig = false">取 消</el-button>
-        <!-- <el-button type="primary" @click="dialogVisible = false">确 定</el-button> -->
-      </span>
-    </el-dialog>
-
-    <el-dialog title="文档添加/编辑" :visible.sync="dialogVisibleArticle" width="60%">
-      <el-form ref="formArticle" label-width="100px">
-        <el-form-item label="标题">
-          <el-input placeholder="请输入标题"></el-input>
-        </el-form-item>
-
-        <el-form-item label="分类">
-          <el-input></el-input>
-        </el-form-item>
-
-        <el-form-item label="内容">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
-        </el-form-item>
-      </el-form>
-      <span slot="footer" class="dialog-footer">
-        <el-button @click="dialogVisibleArticle = false">取 消</el-button>
-        <!-- <el-button type="primary" @click="dialogVisible = false">确 定</el-button> -->
+        <el-button @click="dialogVisible = false">取 消</el-button>
+        <el-button type="primary" @click="categroyUpdate">确 定</el-button>
       </span>
     </el-dialog>
   </div>
 </template>
 
 <script>
-import Axios from "./../server/axios";
-
+import APIS from "./../assets/js/apis";
 export default {
-  components: {},
   data() {
     return {
-      dialogVisibleBanner: false,
-      dialogVisibleConfig: false,
-      dialogVisibleArticle: false,
-      formItemConfig: {},
-      formItemArticle: {},
-      tableData: [
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1518 弄"
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1517 弄"
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1519 弄"
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1516 弄"
-        },
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1518 弄"
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1517 弄"
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1519 弄"
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1516 弄"
-        }
-      ]
+      dialogVisible: false,
+      formRules: {
+        title: [
+          { required: true, message: "请输入栏目标题", trigger: "blur" },
+          { min: 1, max: 8, message: "长度在 1 到 8 个字符", trigger: "blur" }
+        ],
+        name: [
+          { required: true, message: "请输入栏目标识", trigger: "blur" },
+          { min: 1, max: 16, message: "长度在 1 到 16 个字符", trigger: "blur" }
+        ]
+      },
+      categoryData: {
+        id: 0,
+        pid: "",
+        name: "",
+        title: "",
+        description: "",
+        sort: 0,
+        seo_title: "",
+        seo_keywords: "",
+        seo_description: "",
+        templates: "",
+        template_article: ""
+      },
+      categorys: [],
+      templatesCategory: [],
+      templatesArticle: []
     };
   },
+  computed: {},
   async fetch({ store, params }) {
-    // let ret = await store.dispatch("getConfig", params);
-    let ret = await Axios.post("/api/template/info", { name: "index" });
-    console.log("get template ret:", ret);
-    store.commit("templateInfoSet", ret.data);
-    // return ret;
-    // let ret = await store.dispatch("getTemplateByName", { name: "index" });
-    // console.log("getTemplateByName ret", ret);
+    let categoryRet = await APIS.getCategoryData({ category: "category" });
+    console.log("fetch getCategoryData categoryRet:", categoryRet);
+    store.commit("categorysSet", categoryRet.data.rows || []);
+
+    let templatesRet = await APIS.getTemplates();
+    console.log("fetch getTemplates templatesRet:", templatesRet);
+    store.commit("templatesSet", templatesRet.data);
   },
   methods: {
-    bannerModify() {
-      this.dialogVisibleBanner = true;
+    initPidCategorys(currentCategoryId = 0) {
+      let categorys = this.$store.state.categorys;
+      this.categorys = [
+        {
+          id: 0,
+          name: "",
+          title: "顶级栏目"
+        }
+      ];
+      categorys.forEach(item => {
+        let data = {
+          id: item.id,
+          name: item.name,
+          title: item.title
+        };
+        if (item.id === currentCategoryId) {
+          data.disabled = true;
+        }
+        this.categorys.push(data);
+      });
     },
-    configModify(data = {}) {
-      this.formItemConfig = data;
-      this.dialogVisibleConfig = true;
+    categoryAddBtnClick() {
+      let templates = this.$store.state.templates;
+      console.log("methods categoryAddBtnClick templates:", templates);
+      this.templatesCategory = templates.category;
+      this.templatesArticle = templates.article;
+
+      this.initPidCategorys();
+
+      this.categoryData = {
+        id: 0,
+        pid: "",
+        name: "",
+        title: "",
+        description: "",
+        sort: 0,
+        seo_title: "",
+        seo_keywords: "",
+        seo_description: "",
+        template: "",
+        template_article: "",
+        status: 1
+      };
+
+      this.dialogVisible = true;
     },
-    articleModify(data = {}) {
-      this.dialogVisibleArticle = true;
+    categoryUpdateBtnClick(data) {
+      console.log("ethods categoryUpdateBtnClick data:", data);
+
+      Object.keys(this.categoryData).forEach(key => {
+        if (data[key]) {
+          this.categoryData[key] = data[key];
+        }
+      });
+      let templates = this.$store.state.templates;
+      console.log("methods categoryUpdateBtnClick templates:", templates);
+      this.templatesCategory = templates.category;
+      this.templatesArticle = templates.article;
+
+      this.initPidCategorys(data.id);
+
+      this.dialogVisible = true;
+    },
+    async categroyUpdate() {
+      let categoryData = this.categoryData;
+      categoryData.category = "category";
+
+      console.log("categroyUpdate categoryData:", categoryData);
+
+      let valid = await this.formValidata("formCategory");
+      console.log("categroyUpdate valid:", valid);
+
+      if (!valid) {
+        return;
+      }
+
+      if (categoryData.id) {
+        let ret = await APIS.websiteDataUpdate(categoryData);
+        console.log("methods categroyUpdate websiteDataUpdate ret: ", ret);
+        if (ret.code === 0) {
+          await this.categorysReload();
+          this.dialogVisible = false;
+        } else {
+          this.$message.error(ret.message || "error");
+        }
+      } else {
+        let ret = await APIS.websiteDataCreate(categoryData);
+        console.log("methods categroyUpdate websiteDataCreate ret: ", ret);
+        if (ret.code === 0) {
+          await this.categorysReload();
+          this.dialogVisible = false;
+        } else {
+          this.$message.error(ret.message || "error");
+        }
+      }
+    },
+    async categorysReload() {
+      let ret = await APIS.getCategoryData({ category: "category" });
+      console.log("method getCategoryData ret:", ret);
+      await this.$store.commit("categorysSet", ret.data.rows || []);
+      return true;
+    },
+    formValidata(formName) {
+      let ref = this.$refs[formName];
+      return new Promise((r, j) => {
+        ref.validate(valid => {
+          if (valid) {
+            r(true);
+          } else {
+            r(false);
+          }
+        });
+      });
+    },
+    async categoryStatusUpdate(data, status = 0) {
+      try {
+        let confirmRet = await this.$confirm(
+          "是否进行此项操作?",
+          "更改栏目状态",
+          {
+            confirmButtonText: "确定",
+            cancelButtonText: "取消",
+            type: "warning"
+          }
+        );
+
+        console.log(
+          "methods categoryStatusUpdate confirm confirmRet",
+          confirmRet
+        );
+
+        if (confirmRet == "confirm") {
+          Object.keys(this.categoryData).forEach(key => {
+            if (data[key]) {
+              this.categoryData[key] = data[key];
+            }
+          });
+          console.log(
+            "methods categoryStatusUpdate categoryData:",
+            this.categoryData
+          );
+          if (status === 0) {
+            this.categoryData.status = this.categoryData.status === 0 ? 1 : 0;
+          } else {
+            this.categoryData.status = -1;
+          }
+
+          console.log(
+            "methods categoryStatusUpdate categoryData:",
+            this.categoryData
+          );
+          let ret = await APIS.websiteDataUpdate(this.categoryData);
+          console.log(
+            "methods categoryStatusUpdate websiteDataUpdate ret: ",
+            ret
+          );
+          if (ret.code === 0) {
+            await this.categorysReload();
+            // this.dialogVisible = false;
+          } else {
+            this.$message.error(ret.message || "error");
+          }
+        } else {
+          this.$message.error("取消操作");
+        }
+      } catch (err) {
+        console.log(err);
+      }
+
+      // .then(async () => {
+
+      //   // if (ret.code === 0) {
+      //   //   await this.categorysReload();
+      //   //   // this.dialogVisible = false;
+      //   // } else {
+      //   //   this.$message.error(ret.message || "error");
+      //   // }
+      // })
+      // .catch(() => {
+      //   // console.error("categoryStatusUpdate err", err);
+      //   this.$message.error("取消操作！");
+      // });
     }
   }
 };
 </script>
-
-<style>
-</style>

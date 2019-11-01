@@ -1,6 +1,7 @@
 {
   "index": {
     "name": "首页模板",
+    "type": "index",
     "configs": [{
       "name": "website_name",
       "title": "网站名称",
@@ -18,5 +19,47 @@
       "name": "fanslink",
       "title": "友情链接"
     }]
+  },
+  "single": {
+    "name": "栏目单页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "list": {
+    "name": "栏目列表页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "listNews": {
+    "name": "新闻列表页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "listCase": {
+    "name": "案例列表页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "detail": {
+    "name": "默认详情页",
+    "type": "article",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "detailNews": {
+    "name": "新闻详情页",
+    "type": "article",
+    "configs": [],
+    "banners": [],
+    "articles": []
   }
 }
