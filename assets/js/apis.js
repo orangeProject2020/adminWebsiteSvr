@@ -7,14 +7,27 @@ export default {
     return ret
   },
 
-  async getTemplateInfo() {
-    let ret = await axios.post('/api/template/info')
+  async getTemplateInfo(data = {}) {
+    let ret = await axios.post('/api/template/info', {
+      name: data.name
+    })
     return ret
   },
 
   async getCategoryData(data = {}) {
     let ret = await axios.post('/api/website/info/getDataList', {
       category: data.category
+    })
+    return ret
+  },
+
+  async getDocumentData(data = {}) {
+    let ret = await axios.post('/api/website/info/getDataList', {
+      category: "document",
+      type: data.type || 'config',
+      page: data.page || 1,
+      limit: data.limit || 0,
+      pid: data.pid
     })
     return ret
   },

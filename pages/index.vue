@@ -29,7 +29,12 @@
       <el-table-column fixed="right" label width="100">
         <template slot-scope="scope">
           <!-- <el-button type="link" size="small">栏目数据</el-button> -->
-          <router-link :to="{path: '/data', query: {id: scope.row.id}}">栏目数据</router-link>
+          <template v-if="scope.row.template">
+            <router-link
+              :to="{path: '/data', query: {id: scope.row.id , template: scope.row.template}}"
+              class="text-blue-500"
+            >栏目数据</router-link>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -132,7 +137,7 @@ export default {
       },
       categoryData: {
         id: 0,
-        pid: "",
+        pid: 0,
         name: "",
         title: "",
         description: "",
@@ -140,9 +145,10 @@ export default {
         seo_title: "",
         seo_keywords: "",
         seo_description: "",
-        templates: "",
+        template: "",
         template_article: ""
       },
+      // categoryDataPid: 0,
       categorys: [],
       templatesCategory: [],
       templatesArticle: []
@@ -157,6 +163,8 @@ export default {
     let templatesRet = await APIS.getTemplates();
     console.log("fetch getTemplates templatesRet:", templatesRet);
     store.commit("templatesSet", templatesRet.data);
+
+    store.commit("subNavIndexSet", "1");
   },
   methods: {
     initPidCategorys(currentCategoryId = 0) {
@@ -174,7 +182,7 @@ export default {
           name: item.name,
           title: item.title
         };
-        if (item.id === currentCategoryId) {
+        if (item.id === currentCategoryId && currentCategoryId !== 0) {
           data.disabled = true;
         }
         this.categorys.push(data);
@@ -187,6 +195,7 @@ export default {
       this.templatesArticle = templates.article;
 
       this.initPidCategorys();
+      // this.categoryDataPid = 0;
 
       this.categoryData = {
         id: 0,
@@ -209,7 +218,7 @@ export default {
       console.log("ethods categoryUpdateBtnClick data:", data);
 
       Object.keys(this.categoryData).forEach(key => {
-        if (data[key]) {
+        if (data.hasOwnProperty(key)) {
           this.categoryData[key] = data[key];
         }
       });
@@ -219,12 +228,14 @@ export default {
       this.templatesArticle = templates.article;
 
       this.initPidCategorys(data.id);
+      // this.categoryDataPid = data.pid;
 
       this.dialogVisible = true;
     },
     async categroyUpdate() {
       let categoryData = this.categoryData;
       categoryData.category = "category";
+      // categoryData.pid = this.categoryDataPid;
 
       console.log("categroyUpdate categoryData:", categoryData);
 
@@ -292,7 +303,7 @@ export default {
 
         if (confirmRet == "confirm") {
           Object.keys(this.categoryData).forEach(key => {
-            if (data[key]) {
+            if (data.hasOwnProperty(key)) {
               this.categoryData[key] = data[key];
             }
           });
@@ -327,20 +338,6 @@ export default {
       } catch (err) {
         console.log(err);
       }
-
-      // .then(async () => {
-
-      //   // if (ret.code === 0) {
-      //   //   await this.categorysReload();
-      //   //   // this.dialogVisible = false;
-      //   // } else {
-      //   //   this.$message.error(ret.message || "error");
-      //   // }
-      // })
-      // .catch(() => {
-      //   // console.error("categoryStatusUpdate err", err);
-      //   this.$message.error("取消操作！");
-      // });
     }
   }
 };

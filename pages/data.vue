@@ -2,23 +2,46 @@
   <div class>
     <el-card class="mt-4">
       <div slot="header" class="clearfix">
+        <span class="text-2xl">配置内容(Config)</span>
+      </div>
+      <el-table :data="$store.state.templateInfo.configs" style="width: 100%">
+        <el-table-column prop="title" label="配置名称" width="180"></el-table-column>
+        <el-table-column prop="type" label="配置类型" width="180"></el-table-column>
+        <el-table-column label="配置数据">
+          <template slot-scope="scope">
+            <template
+              v-if="$store.state.dataConfigs.hasOwnProperty(scope.row.name)"
+            >{{$store.state.dataConfigs[scope.row.name].value}}</template>
+            <template v-else>-</template>
+          </template>
+        </el-table-column>
+        <el-table-column fixed="right" label="操作" width="100">
+          <template slot-scope="scope">
+            <el-button @click="configModify(scope.row)" type="text" size="small">编辑/查看</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+    </el-card>
+
+    <el-card class="mt-4">
+      <div slot="header" class="clearfix">
         <span class="text-2xl">广告横幅(Banner)</span>
       </div>
       <el-row :gutter="20">
-        <el-col :span="4">
+        <el-col :span="4" v-for="item in $store.state.dataBanners">
           <div class>
-            <div class="text-2xl">图片名称</div>
+            <!-- <div class="text-2xl">图片名称</div> -->
             <div class="mt-2">
-              <img src alt style="height:100px;width:100%;" />
+              <img :src="item.thumb || item.cover" alt style="height:100px;width:100%;" />
             </div>
             <div class="text-right mt-2">
-              <el-button type="primary" size="mini" @click="bannerModify">编辑</el-button>
-              <el-button type="danger" size="mini">删除</el-button>
+              <el-button type="primary" size="mini" @click="bannerModify(item)">编辑</el-button>
+              <el-button type="danger" size="mini" @click="bannerDelete(item)">删除</el-button>
             </div>
           </div>
         </el-col>
         <el-col :span="4">
-          <div class="text-2xl">添加图片</div>
+          <!-- <div class="text-2xl">添加图片</div> -->
           <div
             class="text-center text-2xl border border-dotted mt-2"
             style="height:100px;line-height:100px;cursor: pointer;"
@@ -27,23 +50,6 @@
             <p class="text-5xl">+</p>
           </div>
         </el-col>
-      </el-row>
-    </el-card>
-
-    <el-card class="mt-4">
-      <div slot="header" class="clearfix">
-        <span class="text-2xl">配置内容(Config)</span>
-      </div>
-      <el-row :gutter="20">
-        <template v-for="item in $store.state.templateInfo.configs">
-          <el-col :span="4">
-            <div class="text-2xl border-b">{{item.title}}</div>
-            <div class="mt-2" style="height:80px"></div>
-            <div class="text-right mt-2">
-              <el-button type="primary" size="mini" @click="configModify(item)">设置 / 查看</el-button>
-            </div>
-          </el-col>
-        </template>
       </el-row>
     </el-card>
 
@@ -73,57 +79,38 @@
     </el-card>
 
     <el-dialog title="图片添加/编辑" :visible.sync="dialogVisibleBanner" width="60%">
-      <el-form :model="$store.state.formDataBanner" label-width="100px">
+      <el-form label-width="100px">
         <el-form-item label="图片">
-          <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            multiple
-            :limit="1"
-            :on-exceed="handleExceed"
-            :file-list="fileList"
-          >
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
+          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="formItemBanner.cover"></el-input>
         </el-form-item>
 
         <el-form-item label="缩略图">
-          <el-upload
-            class="upload-demo"
-            action="https://jsonplaceholder.typicode.com/posts/"
-            :on-preview="handlePreview"
-            :on-remove="handleRemove"
-            :before-remove="beforeRemove"
-            multiple
-            :limit="1"
-            :on-exceed="handleExceed"
-            :file-list="fileList"
-          >
-            <el-button size="small" type="primary">点击上传</el-button>
-            <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-          </el-upload>
+          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="formItemBanner.thumb"></el-input>
         </el-form-item>
 
-        <el-form-item label="分类">
-          <el-radio v-model="radio" label="1">备选项</el-radio>
-          <el-radio v-model="radio" label="2">备选项</el-radio>
+        <el-form-item
+          label="分类"
+          v-if="$store.state.templateInfo.banners && $store.state.templateInfo.banners.length"
+        >
+          <template v-for="item in $store.state.templateInfo.banners">
+            <el-radio v-model="formItemBanner.document_category" :label="item.name">{{ item.title }}</el-radio>
+          </template>
         </el-form-item>
 
         <el-form-item label="图片说明">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
+          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="formItemBanner.content"></el-input>
         </el-form-item>
 
         <el-form-item label="点击跳转url">
-          <el-input v-model="input" placeholder="请输入内容"></el-input>
+          <el-input placeholder="请输入内容跳转url" v-model="formItemBanner.url"></el-input>
+        </el-form-item>
+        <el-form-item label="排序">
+          <el-input-number v-model="formItemBanner.sort" :min="0" :max="10000" placeholder="越小越优先"></el-input-number>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisibleBanner = false">取 消</el-button>
-        <!-- <el-button type="primary" @click="dialogVisible = false">确 定</el-button> -->
+        <el-button type="primary" @click="bannerDataUpdate">确 定</el-button>
       </span>
     </el-dialog>
 
@@ -139,33 +126,21 @@
 
         <el-form-item label="配置数据">
           <template v-if="formItemConfig.type == 'text'">
-            <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
+            <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="dataConfigValue"></el-input>
           </template>
           <template v-if="formItemConfig.type == 'img'">
-            <el-upload
-              class="upload-demo"
-              action="https://jsonplaceholder.typicode.com/posts/"
-              :on-preview="handlePreview"
-              :on-remove="handleRemove"
-              :before-remove="beforeRemove"
-              multiple
-              :limit="1"
-              :on-exceed="handleExceed"
-              :file-list="fileList"
-            >
-              <el-button size="small" type="primary">点击上传</el-button>
-              <div slot="tip" class="el-upload__tip">只能上传jpg/png文件，且不超过500kb</div>
-            </el-upload>
+            <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="dataConfigValue"></el-input>
           </template>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
+        <input type="hidden" v-model="formItemConfig.id" />
         <el-button @click="dialogVisibleConfig = false">取 消</el-button>
-        <!-- <el-button type="primary" @click="dialogVisible = false">确 定</el-button> -->
+        <el-button type="primary" @click="configDataUpdate">确 定</el-button>
       </span>
     </el-dialog>
 
-    <el-dialog title="文档添加/编辑" :visible.sync="dialogVisibleArticle" width="60%">
+    <!-- <el-dialog title="文档添加/编辑" :visible.sync="dialogVisibleArticle" width="60%">
       <el-form ref="formArticle" label-width="100px">
         <el-form-item label="标题">
           <el-input placeholder="请输入标题"></el-input>
@@ -181,23 +156,27 @@
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisibleArticle = false">取 消</el-button>
-        <!-- <el-button type="primary" @click="dialogVisible = false">确 定</el-button> -->
+        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
       </span>
-    </el-dialog>
+    </el-dialog>-->
   </div>
 </template>
 
 <script>
-import Axios from "./../server/axios";
-
+// import Axios from "./../server/axios";
+import APIS from "./../assets/js/apis";
 export default {
   components: {},
   data() {
     return {
+      pageID: 0,
+      dataConfigId: 0,
+      dataConfigValue: "",
       dialogVisibleBanner: false,
       dialogVisibleConfig: false,
       dialogVisibleArticle: false,
       formItemConfig: {},
+      formItemBanner: {},
       formItemArticle: {},
       tableData: [
         {
@@ -243,22 +222,161 @@ export default {
       ]
     };
   },
-  async fetch({ store, params }) {
-    // let ret = await store.dispatch("getConfig", params);
-    let ret = await Axios.post("/api/template/info", { name: "index" });
-    console.log("get template ret:", ret);
-    store.commit("templateInfoSet", ret.data);
-    // return ret;
-    // let ret = await store.dispatch("getTemplateByName", { name: "index" });
-    // console.log("getTemplateByName ret", ret);
+  async fetch({ store, route, params }) {
+    console.log("fetch route:", route);
+    let query = route.query || {};
+    let id = query.id || 0;
+    let template = query.template || "";
+    if (template === "") {
+      template = "index";
+    }
+
+    // 获取模板配置
+    let templateInfoRet = await APIS.getTemplateInfo({ name: template });
+    console.log("getch getTemplateInfo templateInfoRet:", templateInfoRet);
+    store.commit("templateInfoSet", templateInfoRet.data);
+    let templateInfo = templateInfoRet.data;
+
+    if (!id) {
+      let categoryRet = await APIS.getCategoryData({ category: "index" });
+      console.log("getch categoryRet ret:", categoryRet);
+      if (categoryRet.data && categoryRet.data.count == 0) {
+        // id = categoryRet.data.rows[0].id;
+        // 生成 首页
+        let categoryIndexCreateRet = await APIS.websiteDataCreate({
+          name: "index",
+          title: "首页",
+          category: "index"
+        });
+        console.log("getch categoryIndexCreateRet:", categoryIndexCreateRet);
+        id = categoryIndexCreateRet.data.id;
+      } else {
+        id = categoryRet.data.rows[0].id;
+      }
+    }
+    console.log("getch pid", id);
+    store.commit("dataPidSet", id);
+
+    // 页面配置数据设置
+    if (templateInfo.configs && templateInfo.configs.length) {
+      let configsDataRet = await APIS.getDocumentData({
+        pid: id,
+        type: "config"
+      });
+      console.log("getch configsDataRet:", configsDataRet);
+      let configsData = configsDataRet.data.rows;
+      store.commit("dataConfigsSet", configsData);
+    }
+
+    // 获取banner数据
+    let bannersDataRet = await APIS.getDocumentData({
+      pid: id,
+      type: "banner"
+    });
+    console.log("getch bannerssDataRet:", bannersDataRet);
+    let bannersData = bannersDataRet.data.rows;
+    store.commit("dataBannnersSet", bannersData);
+
+    store.commit("subNavIndexSet", "2");
   },
   methods: {
-    bannerModify() {
+    bannerModify(data = {}) {
+      let bannerData = {};
+      bannerData.id = data.id || 0;
+      bannerData.cover = data.cover || "";
+      bannerData.thumb = data.thumb || "";
+      bannerData.content = data.content || "";
+      bannerData.url = data.url || "";
+      bannerData.sort = data.sort || 0;
+      bannerData.document_category = data.document_category || "";
+
+      this.formItemBanner = bannerData;
       this.dialogVisibleBanner = true;
+    },
+    async bannerDelete(data) {
+      let bannerData = {};
+      bannerData.id = data.id || 0;
+      bannerData.cover = data.cover || "";
+      bannerData.thumb = data.thumb || "";
+      bannerData.content = data.content || "";
+      bannerData.url = data.url || "";
+      bannerData.sort = data.sort || 0;
+      bannerData.document_category = data.document_category || "";
+
+      this.formItemBanner = bannerData;
+      await this.bannerDataUpdate(-1);
+    },
+    async bannerDataReload() {
+      let bannersDataRet = await APIS.getDocumentData({
+        pid: this.$store.state.dataPid,
+        type: "banner"
+      });
+      console.log("getch bannerssDataRet:", bannersDataRet);
+      let bannersData = bannersDataRet.data.rows;
+      this.$store.commit("dataBannnersSet", bannersData);
+    },
+    async bannerDataUpdate(status = 1) {
+      let bannerData = this.formItemBanner;
+      bannerData.pid = this.$store.state.dataPid;
+      bannerData.category = "document";
+      bannerData.document_type = "banner";
+      bannerData.name = "banner_" + Date.now();
+      bannerData.title = "banner_" + Date.now();
+      bannerData.status = status;
+
+      console.log("methods bannerDataUpdate data:", bannerData);
+
+      let updateRet;
+      if (bannerData.id) {
+        updateRet = await APIS.websiteDataUpdate(bannerData);
+      } else {
+        updateRet = await APIS.websiteDataCreate(bannerData);
+      }
+
+      console.log("methods bannerDataUpdate updateRet:", updateRet);
+      if (updateRet.code == 0) {
+        await this.bannerDataReload();
+        this.dialogVisibleBanner = false;
+      } else {
+        this.$message.error(updateRet.message || "error");
+      }
     },
     configModify(data = {}) {
       this.formItemConfig = data;
+      let dataConfigs = this.$store.state.dataConfigs;
+      if (dataConfigs.hasOwnProperty(data.name)) {
+        this.dataConfigId = dataConfigs[data.name].id;
+        this.dataConfigValue = dataConfigs[data.name].value;
+      } else {
+        this.dataConfigId = 0;
+        this.dataConfigValue = "";
+      }
       this.dialogVisibleConfig = true;
+    },
+    async configDataUpdate() {
+      let configData = {};
+      configData.id = this.dataConfigId;
+      configData.pid = this.$store.state.dataPid;
+      configData.category = "document";
+      configData.name = this.formItemConfig.name;
+      configData.title = this.formItemConfig.title;
+      configData.document_type = "config";
+      configData.content = this.dataConfigValue;
+
+      console.log("methods configDataUpdate configData:", configData);
+
+      let updateRet;
+      if (configData.id) {
+        updateRet = await APIS.websiteDataUpdate(configData);
+      } else {
+        updateRet = await APIS.websiteDataCreate(configData);
+      }
+
+      if (updateRet.code == 0) {
+        this.dialogVisibleConfig = false;
+      } else {
+        this.$message.error(updateRet.message || "error");
+      }
     },
     articleModify(data = {}) {
       this.dialogVisibleArticle = true;

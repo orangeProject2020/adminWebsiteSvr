@@ -3,6 +3,7 @@ import utils from './../assets/js/utils'
 
 export const state = () => ({
   token: '',
+  subNavIndex: "1",
   categorys: [],
   formDataCategory: {
     title: '',
@@ -10,10 +11,17 @@ export const state = () => ({
   },
   templates: {},
   templateInfo: {},
+  dataPid: 0,
+  dataConfigs: {},
+  dataBanners: [],
+  dataArticles: [],
   formDataBanner: {}
 })
 
 export const mutations = {
+  subNavIndexSet(state, data) {
+    state.subNavIndex = data
+  },
   categorysSet(state, data) {
     let categorys = data
     let arr = utils.unLimitTreeLevel(categorys)
@@ -47,6 +55,22 @@ export const mutations = {
   },
   templateInfoSet(state, data) {
     state.templateInfo = data
+  },
+  dataPidSet(state, data) {
+    state.dataPid = data
+  },
+  dataConfigsSet(state, data) {
+    let dataConfigs = {}
+    data.forEach(item => {
+      dataConfigs[item.name] = {
+        id: item.id,
+        value: item.content
+      }
+    })
+    state.dataConfigs = dataConfigs
+  },
+  dataBannnersSet(state, data) {
+    state.dataBanners = data
   }
 }
 

@@ -1,6 +1,6 @@
 <template>
   <div>
-    <el-menu default-active="1" mode="horizontal">
+    <el-menu :default-active="$store.state.subNavIndex" mode="horizontal">
       <el-menu-item index="1">
         <router-link to="/">页面栏目</router-link>
       </el-menu-item>

@@ -86,7 +86,7 @@ async function start() {
         console.log('/auth url:', url)
         if (url.indexOf('/auth') < 0) {
           if (!token) {
-            return res.send('no auth')
+            return res.send('No Auth! 请返回重新登录!')
           }
         }
 
