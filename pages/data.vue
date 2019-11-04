@@ -53,27 +53,52 @@
       </el-row>
     </el-card>
 
-    <el-card class="mt-4">
+    <el-card
+      class="mt-4"
+      v-if="$store.state.templateInfo.articles && $store.state.templateInfo.articles.length"
+    >
       <div slot="header" class="clearfix">
         <span class="text-2xl">文档数据(Article)</span>
         <el-button style="float: right; padding: 3px 0" type="text" @click="articleModify">添加</el-button>
       </div>
-      <el-table :data="tableData" style="width: 100%">
-        <el-table-column prop="date" label="日期" width="180"></el-table-column>
-        <el-table-column prop="name" label="姓名" width="180"></el-table-column>
-        <el-table-column prop="address" label="地址"></el-table-column>
-        <el-table-column fixed="right" label="操作" width="100">
+      <el-table :data="$store.state.dataArticles" style="width: 100%">
+        <el-table-column prop="title" label="标题"></el-table-column>
+
+        <el-table-column label="状态">
           <template slot-scope="scope">
-            <el-button @click="articleModify(scope.row)" type="text" size="small">查看</el-button>
-            <el-button type="text" size="small">编辑</el-button>
+            <el-switch
+              :value="true"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="正常"
+              inactive-text="禁用"
+              v-if="scope.row.status == 1"
+              @change="articleDataStatusUpdate(scope.row, 0)"
+            ></el-switch>
+            <el-switch
+              :value="false"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="正常"
+              inactive-text="禁用"
+              v-if="scope.row.status == 0"
+              @change="articleDataStatusUpdate(scope.row, 1)"
+            ></el-switch>
+          </template>
+        </el-table-column>
+        <el-table-column prop="create_time" label="添加时间" width="180"></el-table-column>
+        <el-table-column fixed="right" label="操作" width="200">
+          <template slot-scope="scope">
+            <el-button @click="articleModify(scope.row)" type="primary" size="small">编辑</el-button>
+            <el-button type="danger" size="small" @click="articleDataStatusUpdate(scope.row, -1)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
       <el-pagination
-        :current-page="1"
-        :page-size="100"
+        :current-page="$store.state.dataArticlesPagination.page"
+        :page-size="$store.state.dataArticlesPagination.limit"
         layout="prev, pager, next, total, jumper"
-        :total="400"
+        :total="$store.state.dataArticlesPagination.total"
         class="mt-4"
       ></el-pagination>
     </el-card>
@@ -140,25 +165,51 @@
       </span>
     </el-dialog>
 
-    <!-- <el-dialog title="文档添加/编辑" :visible.sync="dialogVisibleArticle" width="60%">
-      <el-form ref="formArticle" label-width="100px">
-        <el-form-item label="标题">
-          <el-input placeholder="请输入标题"></el-input>
+    <el-dialog title="文档添加/编辑" :visible.sync="dialogVisibleArticle" width="60%">
+      <el-form
+        ref="formArticle"
+        label-width="100px"
+        :rules="formRulesArticle"
+        :model="formItemArticle"
+      >
+        <el-form-item label="标题" prop="title">
+          <el-input placeholder="请输入标题" v-model="formItemArticle.title"></el-input>
         </el-form-item>
 
-        <el-form-item label="分类">
-          <el-input></el-input>
+        <el-form-item label="分类" prop="document_category">
+          <el-select v-model="formItemArticle.document_category" placeholder="请选择">
+            <el-option
+              v-for="item in $store.state.templateInfo.articles"
+              :key="item.name"
+              :label="item.title"
+              :value="item.name"
+            ></el-option>
+          </el-select>
         </el-form-item>
 
-        <el-form-item label="内容">
-          <el-input type="textarea" :rows="2" placeholder="请输入内容" v-model="textarea"></el-input>
+        <el-form-item label="简述">
+          <el-input
+            type="textarea"
+            :rows="2"
+            placeholder="请输入简述"
+            v-model="formItemArticle.description"
+          ></el-input>
+        </el-form-item>
+
+        <el-form-item label="内容" prop="content">
+          <el-input type="textarea" :rows="5" placeholder="请输入内容" v-model="formItemArticle.content"></el-input>
+        </el-form-item>
+
+        <el-form-item label="排序">
+          <el-input-number v-model="formItemArticle.sort" :min="0" :max="10000" placeholder="越小越优先"></el-input-number>
         </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
+        <input type="hidden" v-model="formItemArticle.id" />
         <el-button @click="dialogVisibleArticle = false">取 消</el-button>
-        <el-button type="primary" @click="dialogVisible = false">确 定</el-button>
+        <el-button type="primary" @click="articleUpdate">确 定</el-button>
       </span>
-    </el-dialog>-->
+    </el-dialog>
   </div>
 </template>
 
@@ -178,48 +229,19 @@ export default {
       formItemConfig: {},
       formItemBanner: {},
       formItemArticle: {},
-      tableData: [
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1518 弄"
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1517 弄"
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1519 弄"
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1516 弄"
-        },
-        {
-          date: "2016-05-02",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1518 弄"
-        },
-        {
-          date: "2016-05-04",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1517 弄"
-        },
-        {
-          date: "2016-05-01",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1519 弄"
-        },
-        {
-          date: "2016-05-03",
-          name: "王小虎",
-          address: "上海市普陀区金沙江路 1516 弄"
-        }
-      ]
+      formRulesArticle: {
+        title: [
+          { required: true, message: "请输入标题", trigger: "blur" },
+          { min: 1, max: 32, message: "长度在 1 到 32 个字符", trigger: "blur" }
+        ],
+        content: [
+          { required: true, message: "请输入文章内容", trigger: "blur" }
+          // { min: 1, max: 16, message: "长度在 1 到 16 个字符", trigger: "blur" }
+        ],
+        document_category: [
+          { required: true, message: "请输入分类", trigger: "blur" }
+        ]
+      }
     };
   },
   async fetch({ store, route, params }) {
@@ -276,6 +298,25 @@ export default {
     console.log("getch bannerssDataRet:", bannersDataRet);
     let bannersData = bannersDataRet.data.rows;
     store.commit("dataBannnersSet", bannersData);
+
+    // 获取文档数据
+    let page = 1;
+    let limit = 10;
+    let articlesDataRet = await APIS.getDocumentData({
+      pid: id,
+      type: "article",
+      page: page,
+      limit: limit
+    });
+    console.log("getch articlesDataRet:", articlesDataRet);
+    let articleRows = articlesDataRet.data.rows || [];
+    let articlePagination = {
+      page: page,
+      limit: limit,
+      total: articlesDataRet.data.count
+    };
+    store.commit("dataArticlesSet", articleRows);
+    store.commit("dataArticlesPaginationSet", articlePagination);
 
     store.commit("subNavIndexSet", "2");
   },
@@ -379,7 +420,94 @@ export default {
       }
     },
     articleModify(data = {}) {
+      let articleData = {};
+      articleData.id = data.id || 0;
+      articleData.title = data.title || "";
+      articleData.name = data.name || "";
+      articleData.description = data.description || "";
+      articleData.document_category = data.document_category || "";
+      articleData.content = data.content || "";
+      articleData.post_time = data.post_time || 0;
+      articleData.sort = data.sort || 0;
+
+      this.formItemArticle = articleData;
       this.dialogVisibleArticle = true;
+    },
+    async articleUpdate() {
+      let articleData = this.formItemArticle;
+      articleData.category = "document";
+      articleData.document_type = "article";
+      articleData.name = articleData.title;
+      articleData.pid = this.$store.state.dataPid;
+
+      let valid = await this.formValidata("formArticle");
+      console.log("articlesUpdate valid:", valid);
+
+      if (!valid) {
+        return;
+      }
+
+      console.log("articleUpdate articleData:", articleData);
+
+      let updateRet;
+      if (articleData.id) {
+        updateRet = await APIS.websiteDataUpdate(articleData);
+      } else {
+        updateRet = await APIS.websiteDataCreate(articleData);
+      }
+
+      console.log("articleUpdate updateRet:", updateRet);
+      if (updateRet.code == 0) {
+        await this.articleDataReload();
+        this.dialogVisibleArticle = false;
+      } else {
+        this.$message.error(updateRet.message || "error");
+      }
+    },
+    async articleDataReload() {
+      let page = this.$store.state.dataArticlesPagination.page;
+      let limit = this.$store.state.dataArticlesPagination.limit;
+      let articlesDataRet = await APIS.getDocumentData({
+        pid: this.$store.state.dataPid,
+        type: "article",
+        page: page,
+        limit: limit
+      });
+      console.log("articleDataReload articlesDataRet:", articlesDataRet);
+      let articleRows = articlesDataRet.data.rows || [];
+      let articlePagination = {
+        page: page,
+        limit: limit,
+        total: articlesDataRet.data.count
+      };
+      this.$store.commit("dataArticlesSet", articleRows);
+      this.$store.commit("dataArticlesPaginationSet", articlePagination);
+    },
+    async articleDataStatusUpdate(data, status = 1) {
+      let articleData = {};
+      articleData = Object.assign({}, articleData, data);
+      console.log("articleDataStatusUpdate articleData", articleData);
+      articleData.status = status;
+      console.log("articleDataStatusUpdate articleData", articleData);
+      let updateRet = await APIS.websiteDataUpdate(articleData);
+      console.log("articleDataStatusUpdate updateRet", updateRet);
+      if (updateRet.code == 0) {
+        await this.articleDataReload();
+      } else {
+        this.$message.error(updateRet.message || "error");
+      }
+    },
+    formValidata(formName) {
+      let ref = this.$refs[formName];
+      return new Promise((r, j) => {
+        ref.validate(valid => {
+          if (valid) {
+            r(true);
+          } else {
+            r(false);
+          }
+        });
+      });
     }
   }
 };

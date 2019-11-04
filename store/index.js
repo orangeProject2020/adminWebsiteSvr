@@ -15,6 +15,11 @@ export const state = () => ({
   dataConfigs: {},
   dataBanners: [],
   dataArticles: [],
+  dataArticlesPagination: {
+    page: 1,
+    limit: 10,
+    total: 0
+  },
   formDataBanner: {}
 })
 
@@ -71,6 +76,12 @@ export const mutations = {
   },
   dataBannnersSet(state, data) {
     state.dataBanners = data
+  },
+  dataArticlesSet(state, data) {
+    state.dataArticles = data
+  },
+  dataArticlesPaginationSet(state, data) {
+    state.dataArticlesPagination = data
   }
 }
 
