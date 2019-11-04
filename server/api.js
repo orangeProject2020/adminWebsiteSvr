@@ -2,7 +2,7 @@ const express = require("express");
 const router = express.Router();
 const request = require("./request");
 const config = require('./../nuxt.config.js').api
-const templates = require('./templates.json')
+const templates = require('./../config/templates.json')
 
 router.post('/templates', (req, res) => {
   return res.json({
