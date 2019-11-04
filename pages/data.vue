@@ -417,6 +417,15 @@ export default {
       }
       this.dialogVisibleConfig = true;
     },
+    async configDataReload() {
+      let configsDataRet = await APIS.getDocumentData({
+        pid: this.$store.state.dataPid,
+        type: "config"
+      });
+      console.log("getch configsDataRet:", configsDataRet);
+      let configsData = configsDataRet.data.rows;
+      this.$store.commit("dataConfigsSet", configsData);
+    },
     async configDataUpdate() {
       let configData = {};
       configData.id = this.dataConfigId;
@@ -426,6 +435,7 @@ export default {
       configData.title = this.formItemConfig.title;
       configData.document_type = "config";
       configData.content = this.dataConfigValue;
+      configData.status = 1;
 
       console.log("methods configDataUpdate configData:", configData);
 
@@ -437,6 +447,7 @@ export default {
       }
 
       if (updateRet.code == 0) {
+        await this.configDataReload();
         this.dialogVisibleConfig = false;
       } else {
         this.$message.error(updateRet.message || "error");

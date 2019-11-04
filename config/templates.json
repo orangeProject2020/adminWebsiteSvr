@@ -3,14 +3,34 @@
     "name": "首页模板",
     "type": "index",
     "configs": [{
-      "name": "website_name",
-      "title": "网站名称",
-      "type": "text"
-    }, {
-      "name": "logo",
-      "title": "网站logo",
-      "type": "img"
-    }],
+        "name": "website_name",
+        "title": "网站名称",
+        "type": "text"
+      }, {
+        "name": "logo",
+        "title": "网站logo",
+        "type": "img"
+      }, {
+        "name": "contract_address",
+        "title": "联系地址",
+        "type": "text"
+      },
+      {
+        "name": "contract_phone",
+        "title": "联系电话",
+        "type": "text"
+      },
+      {
+        "name": "contract_email",
+        "title": "联系邮箱",
+        "type": "text"
+      },
+      {
+        "name": "beian",
+        "title": "备案信息",
+        "type": "text"
+      }
+    ],
     "banners": [{
       "name": "top",
       "title": "顶部banner"
@@ -34,6 +54,27 @@
     "banners": [],
     "articles": []
   },
+  "about": {
+    "name": "关于我们页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "case": {
+    "name": "案例页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
+  "service": {
+    "name": "服务页",
+    "type": "category",
+    "configs": [],
+    "banners": [],
+    "articles": []
+  },
   "list": {
     "name": "栏目列表页",
     "type": "category",
@@ -41,7 +82,7 @@
     "banners": [],
     "articles": []
   },
-  "listNews": {
+  "news": {
     "name": "新闻列表页",
     "type": "category",
     "configs": [],
