@@ -1,6 +1,9 @@
 <template>
   <div class>
-    <el-card class="mt-4">
+    <el-card
+      class="mt-4"
+      v-if="$store.state.templateInfo.configs && $store.state.templateInfo.configs.length"
+    >
       <div slot="header" class="clearfix">
         <span class="text-2xl">配置内容(Config)</span>
       </div>
@@ -17,7 +20,7 @@
         </el-table-column>
         <el-table-column fixed="right" label="操作" width="100">
           <template slot-scope="scope">
-            <el-button @click="configModify(scope.row)" type="text" size="small">编辑/查看</el-button>
+            <el-button @click="configModify(scope.row)" type="primary" size="mini">编辑 / 查看</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -26,31 +29,44 @@
     <el-card class="mt-4">
       <div slot="header" class="clearfix">
         <span class="text-2xl">广告横幅(Banner)</span>
+        <el-button style="float: right;" type="primary" size="small" @click="bannerModify">添加图片</el-button>
       </div>
-      <el-row :gutter="20">
-        <el-col :span="4" v-for="item in $store.state.dataBanners">
-          <div class>
-            <!-- <div class="text-2xl">图片名称</div> -->
-            <div class="mt-2">
-              <img :src="item.thumb || item.cover" alt style="height:100px;width:100%;" />
-            </div>
-            <div class="text-right mt-2">
-              <el-button type="primary" size="mini" @click="bannerModify(item)">编辑</el-button>
-              <el-button type="danger" size="mini" @click="bannerDelete(item)">删除</el-button>
-            </div>
-          </div>
-        </el-col>
-        <el-col :span="4">
-          <!-- <div class="text-2xl">添加图片</div> -->
-          <div
-            class="text-center text-2xl border border-dotted mt-2"
-            style="height:100px;line-height:100px;cursor: pointer;"
-            @click="bannerModify"
-          >
-            <p class="text-5xl">+</p>
-          </div>
-        </el-col>
-      </el-row>
+      <el-table :data="$store.state.dataBanners" style="width: 100%">
+        <el-table-column label="图片">
+          <template slot-scope="scope">
+            <img :src="scope.row.thumb || scope.row.cover" alt style="height:60px;" />
+          </template>
+        </el-table-column>
+        <el-table-column label="排序" prop="sort"></el-table-column>
+        <el-table-column label="状态">
+          <template slot-scope="scope">
+            <el-switch
+              :value="true"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="正常"
+              inactive-text="禁用"
+              v-if="scope.row.status == 1"
+              @change="bannerDataStatusUpdate(scope.row, 0)"
+            ></el-switch>
+            <el-switch
+              :value="false"
+              active-color="#13ce66"
+              inactive-color="#ff4949"
+              active-text="正常"
+              inactive-text="禁用"
+              v-if="scope.row.status == 0"
+              @change="bannerDataStatusUpdate(scope.row, 1)"
+            ></el-switch>
+          </template>
+        </el-table-column>
+        <el-table-column fixed="right" label="操作" width="200">
+          <template slot-scope="scope">
+            <el-button type="primary" size="mini" @click="bannerModify(scope.row)">编辑</el-button>
+            <el-button type="danger" size="mini" @click="bannerDataStatusUpdate(scope.row, -1)">删除</el-button>
+          </template>
+        </el-table-column>
+      </el-table>
     </el-card>
 
     <el-card
@@ -59,10 +75,14 @@
     >
       <div slot="header" class="clearfix">
         <span class="text-2xl">文档数据(Article)</span>
-        <el-button style="float: right; padding: 3px 0" type="text" @click="articleModify">添加</el-button>
+        <el-button style="float: right;" type="primary" size="small" @click="articleModify">添加文档</el-button>
       </div>
       <el-table :data="$store.state.dataArticles" style="width: 100%">
         <el-table-column prop="title" label="标题"></el-table-column>
+        <el-table-column label="添加时间" width="180">
+          <template slot-scope="scope">{{dateFormat(scope.row.create_time)}}</template>
+        </el-table-column>
+        <el-table-column label="排序" prop="sort"></el-table-column>
 
         <el-table-column label="状态">
           <template slot-scope="scope">
@@ -86,11 +106,11 @@
             ></el-switch>
           </template>
         </el-table-column>
-        <el-table-column prop="create_time" label="添加时间" width="180"></el-table-column>
+
         <el-table-column fixed="right" label="操作" width="200">
           <template slot-scope="scope">
-            <el-button @click="articleModify(scope.row)" type="primary" size="small">编辑</el-button>
-            <el-button type="danger" size="small" @click="articleDataStatusUpdate(scope.row, -1)">删除</el-button>
+            <el-button @click="articleModify(scope.row)" type="primary" size="mini">编辑</el-button>
+            <el-button type="danger" size="mini" @click="articleDataStatusUpdate(scope.row, -1)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -216,6 +236,7 @@
 <script>
 // import Axios from "./../server/axios";
 import APIS from "./../assets/js/apis";
+import UTILS from "./../assets/js/utils";
 export default {
   components: {},
   data() {
@@ -321,6 +342,7 @@ export default {
     store.commit("subNavIndexSet", "2");
   },
   methods: {
+    ...UTILS,
     bannerModify(data = {}) {
       let bannerData = {};
       bannerData.id = data.id || 0;
@@ -334,18 +356,19 @@ export default {
       this.formItemBanner = bannerData;
       this.dialogVisibleBanner = true;
     },
-    async bannerDelete(data) {
+    async bannerDataStatusUpdate(data, status = 1) {
       let bannerData = {};
-      bannerData.id = data.id || 0;
-      bannerData.cover = data.cover || "";
-      bannerData.thumb = data.thumb || "";
-      bannerData.content = data.content || "";
-      bannerData.url = data.url || "";
-      bannerData.sort = data.sort || 0;
-      bannerData.document_category = data.document_category || "";
-
-      this.formItemBanner = bannerData;
-      await this.bannerDataUpdate(-1);
+      bannerData = Object.assign({}, bannerData, data);
+      console.log("bannerDataStatusUpdate bannerData", bannerData);
+      bannerData.status = status;
+      console.log("bannerDataStatusUpdate bannerData", bannerData);
+      let updateRet = await APIS.websiteDataUpdate(bannerData);
+      console.log("bannerDataStatusUpdate updateRet", updateRet);
+      if (updateRet.code == 0) {
+        await this.bannerDataReload();
+      } else {
+        this.$message.error(updateRet.message || "error");
+      }
     },
     async bannerDataReload() {
       let bannersDataRet = await APIS.getDocumentData({

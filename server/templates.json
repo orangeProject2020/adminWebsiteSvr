@@ -26,7 +26,11 @@
   "single": {
     "name": "栏目单页",
     "type": "category",
-    "configs": [],
+    "configs": [{
+      "name": "content",
+      "title": "页面内容",
+      "type": "text"
+    }],
     "banners": [],
     "articles": []
   },
@@ -42,14 +46,20 @@
     "type": "category",
     "configs": [],
     "banners": [],
-    "articles": []
+    "articles": [{
+      "name": "news",
+      "title": "新闻"
+    }]
   },
   "listCase": {
     "name": "案例列表页",
     "type": "category",
     "configs": [],
     "banners": [],
-    "articles": []
+    "articles": [{
+      "name": "case",
+      "title": "案例"
+    }]
   },
   "detail": {
     "name": "默认详情页",

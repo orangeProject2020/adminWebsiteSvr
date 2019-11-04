@@ -2,22 +2,41 @@
   <div>
     <div class="text-4xl p-4 border-b">
       网站栏目
-      <el-button type="primary" class="float-right" @click="categoryAddBtnClick">添加栏目</el-button>
+      <el-button type="primary" class="float-right" @click="categoryAddBtnClick" size="small">添加栏目</el-button>
     </div>
     <el-table :data="$store.state.categorys" stripe style="width: 100%">
       <el-table-column label="栏目标题" width="180">
         <template slot-scope="scope">{{scope.row.html}}{{scope.row.title}}</template>
       </el-table-column>
       <el-table-column prop="name" label="标识"></el-table-column>
+      <el-table-column prop="url" label="URL"></el-table-column>
+      <el-table-column label="页面模板" prop="template"></el-table-column>
+      <el-table-column label="跳转">
+        <template slot-scope="scope">
+          <template v-if="scope.row.is_redirect == 1">✔️</template>
+        </template>
+      </el-table-column>
       <el-table-column prop="sort" label="排序" width="50"></el-table-column>
       <el-table-column fixed="right" label="状态" width="200">
         <template slot-scope="scope">
-          <template v-if="scope.row.status == 1">
-            <span class="text-green-400 cursor-pointer" @click="categoryStatusUpdate(scope.row)">正常</span>
-          </template>
-          <template v-if="scope.row.status == 0">
-            <span class="text-red-400 cursor-pointer" @click="categoryStatusUpdate(scope.row)">禁用</span>
-          </template>
+          <el-switch
+            :value="true"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            active-text="正常"
+            inactive-text="禁用"
+            v-if="scope.row.status == 1"
+            @change="categoryStatusUpdate(scope.row, 0)"
+          ></el-switch>
+          <el-switch
+            :value="false"
+            active-color="#13ce66"
+            inactive-color="#ff4949"
+            active-text="正常"
+            inactive-text="禁用"
+            v-if="scope.row.status == 0"
+            @change="categoryStatusUpdate(scope.row, 1)"
+          ></el-switch>
         </template>
       </el-table-column>
       <el-table-column fixed="right" label="操作" width="200">
@@ -29,7 +48,7 @@
       <el-table-column fixed="right" label width="100">
         <template slot-scope="scope">
           <!-- <el-button type="link" size="small">栏目数据</el-button> -->
-          <template v-if="scope.row.template">
+          <template v-if="scope.row.template && scope.row.is_redirect != 1">
             <router-link
               :to="{path: '/data', query: {id: scope.row.id , template: scope.row.template}}"
               class="text-blue-500"
@@ -46,7 +65,7 @@
             <el-option
               v-for="item in categorys"
               :key="item.id"
-              :label="item.title"
+              :label="item.html + item.title"
               :value="item.id"
               :disabled="item.disabled"
             ></el-option>
@@ -68,6 +87,10 @@
         </el-form-item>
         <el-form-item label="栏目排序">
           <el-input-number v-model="categoryData.sort" :min="0" :max="10000" placeholder="越小越优先"></el-input-number>
+        </el-form-item>
+        <el-form-item label="是否跳转下一级">
+          <el-radio v-model="categoryData.is_redirect" :label="redirectValue[0]">否</el-radio>
+          <el-radio v-model="categoryData.is_redirect" :label="redirectValue[1]">是</el-radio>
         </el-form-item>
         <el-divider></el-divider>
         <el-form-item label="栏目SEO标题">
@@ -110,6 +133,14 @@
             ></el-option>
           </el-select>
         </el-form-item>
+        <el-form-item label="文章分页数目">
+          <el-input-number
+            v-model="categoryData.page_limit"
+            :min="0"
+            :max="100"
+            placeholder="0为不分页"
+          ></el-input-number>
+        </el-form-item>
       </el-form>
       <span slot="footer" class="dialog-footer">
         <el-button @click="dialogVisible = false">取 消</el-button>
@@ -125,6 +156,7 @@ export default {
   data() {
     return {
       dialogVisible: false,
+      redirectValue: [0, 1],
       formRules: {
         title: [
           { required: true, message: "请输入栏目标题", trigger: "blur" },
@@ -146,7 +178,9 @@ export default {
         seo_keywords: "",
         seo_description: "",
         template: "",
-        template_article: ""
+        template_article: "",
+        page_limit: 0,
+        is_redirect: 0
       },
       // categoryDataPid: 0,
       categorys: [],
@@ -173,14 +207,16 @@ export default {
         {
           id: 0,
           name: "",
-          title: "顶级栏目"
+          title: "顶级栏目",
+          html: ""
         }
       ];
       categorys.forEach(item => {
         let data = {
           id: item.id,
           name: item.name,
-          title: item.title
+          title: item.title,
+          html: item.html
         };
         if (item.id === currentCategoryId && currentCategoryId !== 0) {
           data.disabled = true;
@@ -209,7 +245,9 @@ export default {
         seo_description: "",
         template: "",
         template_article: "",
-        status: 1
+        status: 1,
+        page_limit: 0,
+        is_redirect: 0
       };
 
       this.dialogVisible = true;
@@ -285,58 +323,16 @@ export default {
       });
     },
     async categoryStatusUpdate(data, status = 0) {
-      try {
-        let confirmRet = await this.$confirm(
-          "是否进行此项操作?",
-          "更改栏目状态",
-          {
-            confirmButtonText: "确定",
-            cancelButtonText: "取消",
-            type: "warning"
-          }
-        );
-
-        console.log(
-          "methods categoryStatusUpdate confirm confirmRet",
-          confirmRet
-        );
-
-        if (confirmRet == "confirm") {
-          Object.keys(this.categoryData).forEach(key => {
-            if (data.hasOwnProperty(key)) {
-              this.categoryData[key] = data[key];
-            }
-          });
-          console.log(
-            "methods categoryStatusUpdate categoryData:",
-            this.categoryData
-          );
-          if (status === 0) {
-            this.categoryData.status = this.categoryData.status === 0 ? 1 : 0;
-          } else {
-            this.categoryData.status = -1;
-          }
-
-          console.log(
-            "methods categoryStatusUpdate categoryData:",
-            this.categoryData
-          );
-          let ret = await APIS.websiteDataUpdate(this.categoryData);
-          console.log(
-            "methods categoryStatusUpdate websiteDataUpdate ret: ",
-            ret
-          );
-          if (ret.code === 0) {
-            await this.categorysReload();
-            // this.dialogVisible = false;
-          } else {
-            this.$message.error(ret.message || "error");
-          }
-        } else {
-          this.$message.error("取消操作");
-        }
-      } catch (err) {
-        console.log(err);
+      let categoryData = {};
+      categoryData = Object.assign({}, categoryData, data);
+      categoryData.status = status;
+      let ret = await APIS.websiteDataUpdate(categoryData);
+      console.log("methods categoryStatusUpdate websiteDataUpdate ret: ", ret);
+      if (ret.code === 0) {
+        await this.categorysReload();
+        // this.dialogVisible = false;
+      } else {
+        this.$message.error(ret.message || "error");
       }
     }
   }
