@@ -85,5 +85,11 @@ module.exports = {
 
   router: {
     // middleware: 'auth'
+  },
+
+  env: {
+    nodeEnv: process.env.NODE_ENV || 'development',
+    apiDomain: 'http://adminWebsite.demo.jianpiane.com',
+    apiDomainLocal: 'http://127.0.0.1:10012'
   }
 }
