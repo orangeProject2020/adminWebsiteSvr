@@ -80,7 +80,7 @@ async function start() {
     let method = req.method || 'get'
     let url = req.originalUrl
     if (method.toLowerCase() === 'get') {
-      if (url.indexOf('.js') > -1 || url.indexOf('.css') > -1 || url.indexOf('.ico') > -1 || url.indexOf('webpack') > -1 || url.indexOf('/.map') > -1) {
+      if (url.indexOf('.js') > -1 || url.indexOf('.css') > -1 || url.indexOf('.ico') > -1 || url.indexOf('webpack') > -1 || url.indexOf('/.map') > -1 || url.indexOf('_nuxt') > -1) {
         next()
       } else {
         console.log('/auth url:', url)
